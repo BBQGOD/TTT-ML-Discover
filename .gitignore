@@ -1,0 +1,7 @@
+.vscode/
+
+**/__pycache__/**
+
+bank_marketing_data/*
+boston_housing_data/*
+breast_cancer_elvira_data/*
