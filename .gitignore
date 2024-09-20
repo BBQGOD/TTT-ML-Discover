@@ -8,4 +8,4 @@ boston_housing_data/*
 breast_cancer_elvira_data/*
 
 *.csv
-
+**/log.txt
