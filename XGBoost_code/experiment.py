@@ -13,6 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'rrl-DM_HW'))
 from rrl.utils import read_csv
 
 DATA_DIR = '../rrl-DM_HW/dataset'
+EARLY_STOP = 10
 
 
 class DBEncoder:
@@ -39,7 +40,7 @@ class DBEncoder:
         continuous_data = X_df[self.f_df.loc[self.f_df[1] == 'continuous', 0]]
         if not continuous_data.empty:
             continuous_data = continuous_data.replace(to_replace=r'.*\?.*', value=np.nan, regex=True)
-            continuous_data = continuous_data.astype(np.float)
+            continuous_data = continuous_data.astype(float)
         return discrete_data, continuous_data
 
     def fit(self, X_df, y_df):
@@ -114,15 +115,25 @@ def get_data_loader(dataset):
 
     return X, y, db_enc
 
+def f1_macro(y_pred, dtrain):
+    labels = dtrain.get_label()
+    # 将预测的概率值转换为类别标签
+    y_pred_labels = np.argmax(y_pred, axis=1)
+    # 计算 F1 macro score
+    f1 = f1_score(labels, y_pred_labels, average='macro')
+    return 'f1_macro', f1
+
 def train_model(args):
     # Get data
-    X, y, db_enc = get_data_loader(args.dataset)
+    X, y, db_enc = get_data_loader(args.data_set)
 
     # Define parameter grid
     param_grid = {
-        'learning_rate': [0.01, 0.1, 0.2],
-        'gamma': [0, 0.1, 1],
-        'max_depth': [3, 5, 7]
+        'learning_rate': args.learning_rate,
+        'gamma': args.gamma,
+        'max_depth': args.max_depth,
+        'eval_metric': [['logloss', f1_macro]],
+        'early_stopping_rounds': [EARLY_STOP]
     }
 
     # Create custom estimator with early stopping
@@ -130,7 +141,7 @@ def train_model(args):
         def fit(self, X, y, **kwargs):
             # Split X and y into train and eval set
             X_train, X_eval, y_train, y_eval = train_test_split(X, y, test_size=0.2, random_state=42)
-            super().fit(X_train, y_train, eval_set=[(X_eval, y_eval)], eval_metric=['logloss', 'f1_macro'], early_stopping_rounds=10)
+            super().fit(X_train, y_train, eval_set=[(X_eval, y_eval)])
             return self
 
     # Create scoring metrics
