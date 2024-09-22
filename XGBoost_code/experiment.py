@@ -117,6 +117,7 @@ def get_data_loader(dataset):
     return X, y, db_enc
 
 def f1_then_logloss(y_true, y_pred):
+    # rationale: https://github.com/dmlc/xgboost/issues/10095
     y_true = y_true.reshape(-1, CLASS_NUM)
     y_true_class = np.argmax(y_true, axis=1)
     y_pred_class = np.argmax(y_pred, axis=1)
