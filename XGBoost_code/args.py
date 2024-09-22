@@ -11,8 +11,6 @@ parser.add_argument('-g', '--gamma', type=float, nargs='+', default=[0],
                     help='Set the gamma(s) (minimum loss reduction required to make a further partition). Provide multiple values as a list.')
 parser.add_argument('-nthread', '--nthread', type=int, default=2, 
                     help='Set the number of parallel threads.')
-parser.add_argument('--print_feature_importance', action="store_true", 
-                    help='Print feature importances after training.')
 
 # Set paths for saving model and logs
 parser.add_argument('--model', type=str, default='xgb_model.json', help='Path to save/load the model.')

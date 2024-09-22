@@ -6,14 +6,15 @@ from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV, train_test_split, cross_validate
 from sklearn.impute import SimpleImputer
 from xgboost import XGBClassifier
-from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score, f1_score, log_loss
 from args import xgb_args
-import joblib
+import math
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'rrl-DM_HW'))
 from rrl.utils import read_csv
 
 DATA_DIR = '../rrl-DM_HW/dataset'
-EARLY_STOP = 10
+EARLY_STOP = 50
+CLASS_NUM = 2
 
 
 class DBEncoder:
@@ -115,13 +116,18 @@ def get_data_loader(dataset):
 
     return X, y, db_enc
 
-def f1_macro(y_pred, dtrain):
-    labels = dtrain.get_label()
-    # 将预测的概率值转换为类别标签
-    y_pred_labels = np.argmax(y_pred, axis=1)
-    # 计算 F1 macro score
-    f1 = f1_score(labels, y_pred_labels, average='macro')
-    return 'f1_macro', f1
+def f1_then_logloss(y_true, y_pred):
+    y_true = y_true.reshape(-1, CLASS_NUM)
+    y_true_class = np.argmax(y_true, axis=1)
+    y_pred_class = np.argmax(y_pred, axis=1)
+    # 计算logloss
+    logloss_value = log_loss(y_true, y_pred)
+    # 计算f1 macro score
+    f1_macro = f1_score(y_true_class, y_pred_class, average='macro')
+
+    ret = logloss_value + math.floor((1 - f1_macro) * 100)
+    return ret
+    
 
 def train_model(args):
     # Get data
@@ -132,15 +138,16 @@ def train_model(args):
         'learning_rate': args.learning_rate,
         'gamma': args.gamma,
         'max_depth': args.max_depth,
-        'eval_metric': [['logloss', f1_macro]],
-        'early_stopping_rounds': [EARLY_STOP]
+        'eval_metric': [f1_then_logloss],
+        'early_stopping_rounds': [EARLY_STOP],
+        'n_jobs': [args.nthread]
     }
 
     # Create custom estimator with early stopping
     class XGBClassifierWithEarlyStopping(XGBClassifier):
         def fit(self, X, y, **kwargs):
             # Split X and y into train and eval set
-            X_train, X_eval, y_train, y_eval = train_test_split(X, y, test_size=0.2, random_state=42)
+            X_train, X_eval, y_train, y_eval = train_test_split(X, y, test_size=0.05)
             super().fit(X_train, y_train, eval_set=[(X_eval, y_eval)])
             return self
 
@@ -195,7 +202,7 @@ def train_model(args):
     print("Macro F1 Score: ", f1)
 
     # Save the best model
-    joblib.dump(best_estimator, 'best_xgb_model.pkl')
+    best_estimator.save_model(args.model)
 
 if __name__ == '__main__':
     train_model(xgb_args)
