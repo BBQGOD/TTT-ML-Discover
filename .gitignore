@@ -9,4 +9,6 @@ breast_cancer_elvira_data/*
 
 *.csv
 **/log.txt
+**/log.*.txt
 XGBoost_code/xgb_model.json
+KNN_FS_LLM_code/glove.*

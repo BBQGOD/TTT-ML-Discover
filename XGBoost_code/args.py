@@ -3,6 +3,8 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-d', '--data_set', type=str, default='tic-tac-toe',
                     help='Set the data set for training. All the data sets in the dataset folder are available.')
+parser.add_argument('-t', '--task', type=str, default='classification',
+                    help='Set the task for training. classification or regression.')
 parser.add_argument('-lr', '--learning_rate', type=float, nargs='+', default=[0.1], 
                     help='Set the learning rate(s) for XGBoost. Provide multiple values as a list.')
 parser.add_argument('-md', '--max_depth', type=int, nargs='+', default=[3], 
