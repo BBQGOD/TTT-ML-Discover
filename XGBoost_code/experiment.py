@@ -21,11 +21,13 @@ CLASS_NUM = 2
 class DBEncoder:
     """Encoder used for data discretization and binarization."""
 
-    def __init__(self, f_df, discrete=False, y_one_hot=True, drop='first'):
+    def __init__(self, f_df, discrete=False, y_one_hot=True, drop='first', y_discrete=True):
         self.f_df = f_df
         self.discrete = discrete
+        self.y_discrete = y_discrete
         self.y_one_hot = y_one_hot
-        self.label_enc = preprocessing.OneHotEncoder(categories='auto') if y_one_hot else preprocessing.LabelEncoder()
+        if y_discrete:
+            self.label_enc = preprocessing.OneHotEncoder(categories='auto') if y_one_hot else preprocessing.LabelEncoder()
         # Only initialize OneHotEncoder if not using raw discrete features
         if not discrete:
             self.feature_enc = preprocessing.OneHotEncoder(categories='auto', drop=drop)
@@ -49,8 +51,11 @@ class DBEncoder:
         X_df = X_df.reset_index(drop=True)
         y_df = y_df.reset_index(drop=True)
         discrete_data, continuous_data = self.split_data(X_df)
-        self.label_enc.fit(y_df)
-        self.y_fname = list(self.label_enc.get_feature_names_out(y_df.columns)) if self.y_one_hot else y_df.columns
+        if self.y_discrete:
+            self.label_enc.fit(y_df)
+            self.y_fname = list(self.label_enc.get_feature_names_out(y_df.columns)) if self.y_one_hot else y_df.columns
+        else:
+            self.y_fname = y_df.columns
 
         if not continuous_data.empty:
             # Use mean as missing value for continuous columns if do not discretize them.
@@ -80,9 +85,12 @@ class DBEncoder:
         y_df = y_df.reset_index(drop=True)
         discrete_data, continuous_data = self.split_data(X_df)
         # Encode string value to int index.
-        y = self.label_enc.transform(y_df.values.reshape(-1, 1))
-        if self.y_one_hot:
-            y = y.toarray()
+        if self.y_discrete:
+            y = self.label_enc.transform(y_df.values.reshape(-1, 1))
+            if self.y_one_hot:
+                y = y.toarray()
+        else:
+            y = y_df.values
 
         if not continuous_data.empty:
             # Use mean as missing value for continuous columns if we do not discretize them.
@@ -107,12 +115,12 @@ class DBEncoder:
 
         return X_df.values, y
 
-def get_data_loader(dataset):
+def get_data_loader(dataset, y_discrete=True):
     data_path = os.path.join(DATA_DIR, dataset + '.data')
     info_path = os.path.join(DATA_DIR, dataset + '.info')
     X_df, y_df, f_df, label_pos = read_csv(data_path, info_path, shuffle=True)
 
-    db_enc = DBEncoder(f_df, discrete=False)
+    db_enc = DBEncoder(f_df, discrete=False, y_discrete=y_discrete)
     db_enc.fit(X_df, y_df)
 
     X, y = db_enc.transform(X_df, y_df, normalized=True, keep_stat=True)
@@ -131,7 +139,6 @@ def f1_then_logloss(y_true, y_pred):
 
     ret = logloss_value + math.floor((1 - f1_macro) * 100)
     return ret
-    
 
 def train_model(args):
     # Get data
@@ -139,8 +146,10 @@ def train_model(args):
         X_train, y_train, db_enc = get_data_loader(args.data_set.format('train'))
         X_test_df, y_test_df, _, _ = read_csv(os.path.join(DATA_DIR, args.data_set.format('test') + '.data'), os.path.join(DATA_DIR, args.data_set.format('test') + '.info'))
         X_test, y_test = db_enc.transform(X_test_df, y_test_df, normalized=True)
-    elif args.task in ['classification', 'regression']:
+    elif args.task == 'classification':
         X, y, db_enc = get_data_loader(args.data_set)
+    elif args.task == 'regression':
+        X, y, db_enc = get_data_loader(args.data_set, y_discrete=False)
     else:
         raise ValueError("Invalid task type. Please choose from 'classification', 'classification-test' or 'regression'.")
 
