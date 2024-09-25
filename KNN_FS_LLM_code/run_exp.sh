@@ -23,8 +23,8 @@ python experiment.py \
 python experiment.py \
     -d breast-cancer-{}-wo-scaled \
     -t classification-test \
-    -ak sk-UOArhyzuKw4Xaiga3e40F22502B44a6c93CaAaC336A3A1F1 \
-    -bu http://15.204.101.64:4000/v1 \
+    -ak <api_key> \
+    -bu <base_url> \
     -k 3 \
     -bs 1 \
     -nthread 16 > log.breast-cancer.txt
