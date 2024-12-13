@@ -7,7 +7,7 @@ parser.add_argument('-t', '--task', type=str, default='classification',
                     help='Set the task for training. classification or regression.')
 parser.add_argument('-ak', '--api_key', type=str, default='',
                     help='Set the API key for the LLM service.')
-parser.add_argument('-bu', '--base_url', type=str, default='',
+parser.add_argument('-bu', '--base_url', type=str, default='https://api.openai.com/v1',
                     help='Set the base URL for the LLM service.')
 parser.add_argument('-k', '--knn', type=int, nargs='+', default=[5], 
                     help='Set the number of neighbors for the KNN algorithm.')

@@ -13,8 +13,19 @@ parser.add_argument('-g', '--gamma', type=float, nargs='+', default=[0],
                     help='Set the gamma(s) (minimum loss reduction required to make a further partition). Provide multiple values as a list.')
 parser.add_argument('-nthread', '--nthread', type=int, default=2, 
                     help='Set the number of parallel threads.')
+parser.add_argument('--device', type=str, default='cpu', choices=['cpu', 'cuda'],
+                    help='Set the device for training. cpu or cuda.')
+
+parser.add_argument('-k', '--knn', type=int, nargs='+', default=[50], 
+                    help='Set the number of neighbors for the KNN algorithm.')
+parser.add_argument('-bs', '--batch_size', type=int, nargs='+', default=[3],
+                    help='Set the batch size for training.')
+
 
 # Set paths for saving model and logs
 parser.add_argument('--model', type=str, default='xgb_model.json', help='Path to save/load the model.')
 
 xgb_args = parser.parse_args()
+
+# if xgb_args.device == 'cuda':
+    # xgb_args.nthread = 1
