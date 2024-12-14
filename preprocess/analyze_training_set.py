@@ -134,7 +134,7 @@ if DS_TYPE == "csv_semicolon":
     plt.figure(figsize=(8, 6))
     y_train_counts.plot(kind='bar', color='c', alpha=0.7)
     plt.title(f'{DISPLAY_NAME} 训练集标签分布')
-    plt.xlabel('活动类型')
+    plt.xlabel('类别标签')
     plt.ylabel('数量')
     plt.xticks(ticks=range(len(x_labels)), labels=x_labels, ha='center', rotation=0)
     plt.tight_layout()
