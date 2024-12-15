@@ -1,6 +1,6 @@
 # 可解释数据挖掘实践实验报告
 
-本实验基于 [**Bank Marketing**](https://archive.ics.uci.edu/dataset/222/bank+marketing)、[**Boston Housing**](https://www.kaggle.com/datasets/altavish/boston-housing-dataset)、[**Breast Cancer**](https://www.kaggle.com/datasets/theoneandonlyp/breast-cancer-elvira-biomedical-dataset/data?select=breastCancer_Total.dbc) 数据集，对数据进行可解释挖掘——具体而言，进行可解释分类与回归。通过实验不同的可解释性算法（包括“*Scalable Rule-Based Representation Learning for Interpretable Classification*”论文\[2\]提出的RRL模型），评估其性能和适用性，并完成实证分析和改进。
+本实验基于 [**Bank Marketing**](https://archive.ics.uci.edu/dataset/222/bank+marketing)、[**Boston Housing**](https://www.kaggle.com/datasets/altavish/boston-housing-dataset)、[**Breast Cancer**](https://www.kaggle.com/datasets/theoneandonlyp/breast-cancer-elvira-biomedical-dataset/data?select=breastCancer_Total.dbc)\[1\] 数据集，对数据进行可解释挖掘——具体而言，进行可解释分类与回归。通过实验不同的可解释性算法（包括“*Scalable Rule-Based Representation Learning for Interpretable Classification*”论文\[2\]提出的RRL模型），评估其性能和适用性，并完成实证分析和改进。
 
 ## 1. 数据分析及预处理
 
@@ -320,9 +320,9 @@ def remove_outliers_zscore(X, y, threshold=3.0):
 
 以下为实验中使用的算法实现设置：
 
-- **RRL**：使用论文\[2\]中提供的代码实现，在默认设置外，在Bank Marketing数据集使用网格搜索调整超参数，搜索范围分别是：`learning_rate` $\in [2\times 10^{-4}, 1\times 10^{-3}, 5\times 10^{-3}]$，`temperature` $\in [0.01, 0.1, 1]$，`weight_decay` $\in [0, 1\times 10^{-5}, 1\times 10^{-4}, 1\times 10^{-2}]$。各数据集应用的最优超参数为：`learning_rate` $= 1\times 10^{-3}$，`temperature` $= 1$，`weight_decay` $= 0$。并且，在Bank Marketing数据集搜索不同模型架构后，发现单逻辑层或双逻辑层的模型效果较好，因此在实验中主要使用的模型逻辑层架构为`128@1024`。由于Breast Cancer数据集维度较高，受显存限制，主要使用的模型逻辑层架构为`16@32`。
-- **Xgboost**：使用`Xgboost`库实现，对于分类任务，使用`Xgboost`的`XGBClassifier`，对于回归任务，使用`Xgboost`的`XGBRegressor`。早停策略的判断阈值为50步。在Bank Marketing数据集使用网格搜索调整超参数，搜索范围分别是：`learning_rate` $\in [1\times 10^{-2}, 1\times 10^{-1}, 1]$，`max_depth` $\in [3, 5, 7]$，`gamma` $\in [0, 0.1, 0.3]$。各数据集应用的最优超参数为：`learning_rate` $= 0.1$，`max_depth` $= 7$，`gamma` $= 0.3$。
-- **Few-shot ICL**：使用`GloVe.6B.50d`预训练词向量，使用`gpt-4o-mini-2024-07-18`模型进行推理，`temperature`设置为0。最大输入大模型的维度为64，超过64维特征的样本的后续特征会被截断。实验中主要使用的近邻数 $k=5$，并且为节省开销，将5次推理通过Batch Prompting\[4\]合并；因此实验中主要使用的样本数为15。对于Breast Cancer数据集，由于特征维度较高，受上下文窗口长度限制，未使用Batch Prompting，因此主要使用的样本数为5。
+- **RRL**：使用论文\[2\]中提供的代码实现，在默认设置外，在Bank Marketing数据集使用网格搜索调整超参数，搜索范围分别是：`learning_rate` $\in [2\times 10^{-4}, 1\times 10^{-3}, 5\times 10^{-3}]$，`temperature` $\in [0.01, 0.1, 1]$，`weight_decay` $\in [0, 1\times 10^{-5}, 1\times 10^{-4}, 1\times 10^{-2}]$。各数据集应用的最优超参数为：`learning_rate` $= 1\times 10^{-3}$，`temperature` $= 1$，`weight_decay` $= 0$。并且，在Bank Marketing数据集搜索不同模型架构后，发现单逻辑层或双逻辑层的模型效果较好，因此在主要实验中使用的模型逻辑层架构为`128@1024`。由于Breast Cancer数据集维度较高，受显存限制，主要实验中使用的模型逻辑层架构为`16@32`。
+- **Xgboost**：使用`Xgboost`库实现，对于分类任务，使用`Xgboost`的`XGBClassifier`，对于回归任务，使用`Xgboost`的`XGBRegressor`。早停策略的判断阈值为50步。在Bank Marketing数据集使用网格搜索调整超参数，搜索范围分别是：`learning_rate` $\in [1\times 10^{-2}, 1\times 10^{-1}, 1]$，`max_depth` $\in [3, 5, 7]$，`gamma` $\in [0, 0.1, 0.3]$。主要实验中各数据集应用的最优超参数为：`learning_rate` $= 0.1$，`max_depth` $= 7$，`gamma` $= 0.3$；使用的线程数为16。
+- **Few-shot ICL**：使用`GloVe.6B.50d`预训练词向量，使用`gpt-4o-mini-2024-07-18`模型进行推理，`temperature`设置为0。最大输入大模型的维度为64，超过64维特征的样本的后续特征会被截断。实验中主要使用的近邻数 $k=3$，并且为节省开销，将5次推理通过Batch Prompting\[4\]合并；因此实验中主要使用的样本数为15。对于Bank Marketing数据集，由于数据集规模过大，仅使用了随机采样1%的子集。对于Breast Cancer数据集，由于特征维度较高，受上下文窗口长度限制，未使用Batch Prompting，因此主要实验中使用的样本数为3。各实验中使用的大模型请求线程数为16。
 
 > 后续实现的推理时训练方法的实验设置相同。
 
@@ -336,7 +336,7 @@ def remove_outliers_zscore(X, y, threshold=3.0):
 
 **复杂度指标**：
 - 训练用时：模型训练的平均总时间；用秒（s）表示，越小越好。
-- 推理用时：模型推理单个样本的平均时间；用秒（s）表示，越小越好。
+- 推理用时：模型推理整个测试集的平均时间；用秒（s）表示，越小越好。
 
 特别地，由于Bank Marketing数据集与Breast Cancer数据集并未提供测试集，因此在实验中对这两个数据集进行5折交叉验证，以评估模型的性能。
 
@@ -346,17 +346,45 @@ def remove_outliers_zscore(X, y, threshold=3.0):
 
 - Bank Marketing数据集实验结果：
 
-    | 方法 | Acc | Macro-F1 Score | 训练用时（s） | 推理用时（s） |
+    > \*代表使用了1%的子集
+
+    | 方法 | Acc (↑) | Macro-F1 Score (↑) | 训练用时（s） (↓) | 推理用时（s） (↓) |
     |:--------:|:-------------:|:------------:|:-------------:|:-------------:|
-    | **RRL**  | 0.900         | 0.900        | 0.002         | 0.001         |
-    | **Xgboost** | 0.900         | 0.900        | 0.002         | 0.001         |
-    | **Few-shot ICL** | 0.900         | 0.900        | 0.002         | 0.001         |
+    | **RRL**  |     0.892     |     **0.764**     |   10354.446       |     3.037       |
+    | **Xgboost** | **0.909**         | 0.749        | 0.812         | **0.027**         |
+    | **Few-shot ICL**\* | 0.677         | 0.489        | **0.006**         | 7.994           |
+
+- Boston Housing数据集实验结果：
+
+    | 方法 | RMSE (↓) | 训练用时（s） (↓) | 推理用时（s） (↓) |
+    |:--------:|:-------------:|:-------------:|:-------------:|
+    | **RRL**  |          |   142.849         | 0.900         |
+    | **Xgboost** | **4.049**        | 5.624         | **0.020**         |
+    | **Few-shot ICL** | 10.129         | **0.001**         | 9.716         |
+
+- Breast Cancer数据集实验结果：
+
+    | 方法 | Acc (↑) | Macro-F1 Score (↑) | 训练用时（s） (↓) | 推理用时（s） (↓) |
+    |:--------:|:-------------:|:------------:|:-------------:|:-------------:|
+    | **RRL**  | 0.368         | 0.269        | 188.952         | 0.987         |
+    | **Xgboost** | **0.579**         | **0.457**        | 39.692         | **0.011**         |
+    | **Few-shot ICL** | 0.368         | 0.269        | **0.009**         | 19.410         |
+
+**实验结论**：
 
 #### 2.5.2 RRL规则表征分析实验
 
+在此分析实验中，首先分别调整了RRL模型中 $k$ 的取值，从而调整数值型特征阈值的个数，以观察模型性能的变化。实验结果如下：
+
+进而分别调整了RRL模型可生成的规则的最大数量——即最后一个逻辑层的神经元数量，以观察模型性能的变化。实验结果如下：
+
 #### 2.5.3 从Few-shot ICL到Many-shot ICL分析实验
 
+在此分析实验中，调整了Few-shot ICL方法中近邻数 $k$ 的取值，从而调整大模型上下文学习的示例数量，以观察模型性能的变化。由于在Bank Marketing数据集和Boston Housing数据集使用了Batch Prompting，因此此时上下文示例数量为 $k \times bs$，其中 $bs$ 为推理的批大小；而Breast Cancer数据集的上下文示例数量为 $k$。实验结果如下：
+
 #### 2.5.4 基于Xgboost的推理时训练实验
+
+在此分析实验中，目标在于进一步增强Xgboost方法的性能。从2.4.1中的主要实验结果中可以看出，Xgboost方法的推理用时最短，
 
 ## 3. 分析与讨论
 
