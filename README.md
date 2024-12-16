@@ -26,7 +26,6 @@
 ##### 🔗 Table of Contents
 
 - [📍 Overview](#-overview)
-- [👾 Features](#-features)
 - [📂 Repository Structure](#-repository-structure)
 - [🧩 Modules](#-modules)
 - [🚀 Getting Started](#-getting-started)
@@ -44,12 +43,6 @@
 ## 📍 Overview
 
 The dm-interpretabledm project is a comprehensive framework designed for facilitating systematic experimentation with interpretable machine learning models, specifically focusing on K-Nearest Neighbors (KNN) and XGBoost algorithms. It provides users with tools for data preprocessing, hyperparameter tuning, and performance evaluation across diverse datasets, enhancing the model training experience while maintaining data integrity. By incorporating flexible configuration management and automated execution scripts, the project significantly streamlines the workflow for researchers and developers, making it easier to explore, validate, and understand the performance of various machine learning models in practical applications.
-
----
-
-## 👾 Features
-
-<code>❯ REPLACE-ME</code>
 
 ---
 
